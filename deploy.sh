@@ -44,6 +44,30 @@ else
     echo "Docker уже установлен."
 fi
 
+# Проверка прав на сокет Docker
+check_docker_socket() {
+    # Проверка, есть ли доступ к сокету Docker
+    if ! docker ps &> /dev/null; then
+        echo "Ошибка: Нет доступа к Docker сокету /var/run/docker.sock."
+
+        # Предложим добавить пользователя в группу docker
+        echo "Попробуем добавить пользователя в группу docker..."
+        sudo usermod -aG docker $USER
+
+        # Перезапуск Docker и применение изменений
+        sudo systemctl restart docker
+
+        # Уведомление, что нужно перезайти или обновить группу
+        echo "Пожалуйста, выйдите из системы и войдите снова или используйте команду: newgrp docker"
+        exit 1
+    else
+        echo "Доступ к Docker сокету успешно настроен."
+    fi
+}
+
+# Проверка прав на сокет
+check_docker_socket
+
 # Переменные
 IMAGE="itzg/minecraft-server"  # Docker-образ для Minecraft Paper сервера
 CONTAINER_NAME="minecraft_server"  # Имя контейнера
