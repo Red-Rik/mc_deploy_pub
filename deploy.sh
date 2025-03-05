@@ -119,6 +119,12 @@ echo "Проверка фаервола..."
 sudo ufw allow 25565/tcp
 echo "Порт 25565 открыт для входящих подключений."
 
+# Установка screen внутри контейнера
+echo "Проверяем, установлен ли screen в контейнере..."
+
+docker exec $CONTAINER_NAME apt-get update -y
+docker exec $CONTAINER_NAME apt-get install -y screen
+
 # Проверка, запущен ли сервер через screen
 echo "Проверяем, запущен ли Minecraft сервер через screen..."
 
