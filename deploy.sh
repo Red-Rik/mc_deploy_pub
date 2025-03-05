@@ -57,8 +57,12 @@ check_docker_socket() {
         # Перезапуск Docker и применение изменений
         sudo systemctl restart docker
 
+        # Выполнение newgrp для применения изменений без выхода из системы
+        echo "Автоматически применяем новые группы..."
+        newgrp docker
+
         # Уведомление, что нужно перезайти или обновить группу
-        echo "Пожалуйста, выйдите из системы и войдите снова или используйте команду: newgrp docker"
+        echo "Пожалуйста, выйдите из системы и войдите снова, если newgrp не помогло."
         exit 1
     else
         echo "Доступ к Docker сокету успешно настроен."
@@ -115,8 +119,33 @@ echo "Проверка фаервола..."
 sudo ufw allow 25565/tcp
 echo "Порт 25565 открыт для входящих подключений."
 
-# Подключение к консоли сервера через Docker
-echo "Чтобы подключиться к консоли сервера, используйте команду:"
-echo "docker exec -it minecraft_server /bin/bash"
+# Проверка, запущен ли сервер через screen
+echo "Проверяем, запущен ли Minecraft сервер через screen..."
+
+# Проверка наличия screen в контейнере
+docker exec $CONTAINER_NAME screen -ls > /dev/null 2>&1
+
+if [ $? -eq 0 ]; then
+    # Если screen запущен, выводим сообщение
+    echo "Minecraft сервер работает через screen."
+else
+    # Если screen не найден, запускаем сервер через screen
+    echo "Запускаем Minecraft сервер через screen..."
+
+    docker exec -it $CONTAINER_NAME bash -c "screen -S minecraft_server -dm java -Xmx$MEMORY -Xms$MEMORY -jar /minecraft_server.jar nogui"
+
+    if [ $? -eq 0 ]; then
+        echo "Minecraft сервер успешно запущен через screen!"
+    else
+        echo "Произошла ошибка при запуске Minecraft сервера через screen."
+        exit 1
+    fi
+fi
+
+# Подключение к консоли сервера через Docker и Screen
+echo "Чтобы подключиться к консоли сервера через screen, используйте команду:"
+echo "docker exec -it minecraft_server screen -r minecraft_server"
+
+# Для получения логов сервера используйте команду:
 echo "Для получения логов сервера используйте команду:"
 echo "docker logs -f minecraft_server"
